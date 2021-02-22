@@ -98,12 +98,12 @@ def venues():
   # TODO: replace with real venues data.
   #       num_shows should be aggregated based on number of upcoming shows per venue.
   data=[]
-  state_data= db.session.query(Venue.state).group_by(Venue.state,).all()
-    
+  state_data= db.session.query(Venue.state, Venue.city).group_by(Venue.state, Venue.city).all()
+
   for i in range(len(state_data)):
-    data.append({'city':db.session.query(Venue.city).filter_by(state= state_data[i]).first()[0],'state':state_data[i][0],'venues':db.session.query(Venue.name).filter_by(state= state_data[i]).all()})
+    data.append({'city':state_data[i][1],'state':state_data[i][0],'venues':db.session.query(Venue.name, Venue.id).filter_by(state= state_data[i][0], city=state_data[i][1]).all()})
     
-    # print(_data[i],_data[i].city,_data[i].state,_data[i].name)
+  
   # data=[{
   #   "city": "San Francisco",
   #   "state": "CA",
