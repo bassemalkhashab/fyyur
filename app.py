@@ -44,7 +44,10 @@ class Venue(db.Model):
     website = db.Column(db.String(500))
     seeking_talent = db.Column(db.Boolean(), default= False)
     seeking_description = db.Column(db.String())
-    
+    past_shows= 
+    upcoming_shows=
+    past_shows_count= db.Column(db.Integer)
+    upcoming_shows_count= db.Column(db.Integer)
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -62,6 +65,7 @@ class Artist(db.Model):
     website = db.Column(db.String(500))
     seeking_talent = db.Column(db.Boolean(), default= False)
     seeking_description = db.Column(db.String())
+
 class Show(db.Model):
   __tablename__='Show'
 
@@ -69,7 +73,7 @@ class Show(db.Model):
   artist_id= db.Column(db.Integer, nullable=False)
   venue_id= db.Column(db.Integer, nullable=False)
   start_time= db.Column(db.DateTime)
-
+  
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
