@@ -44,10 +44,9 @@ class Venue(db.Model):
     website = db.Column(db.String(500))
     seeking_talent = db.Column(db.Boolean(), default= False)
     seeking_description = db.Column(db.String())
-    past_shows= 
-    upcoming_shows=
-    past_shows_count= db.Column(db.Integer)
-    upcoming_shows_count= db.Column(db.Integer)
+    
+    num_past_shows= db.Column(db.Integer)
+    num_upcoming_shows_count= db.Column(db.Integer)
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -73,7 +72,7 @@ class Show(db.Model):
   artist_id= db.Column(db.Integer, nullable=False)
   venue_id= db.Column(db.Integer, nullable=False)
   start_time= db.Column(db.DateTime)
-  
+  past_or_upcomming= db.Column(db.String())
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
@@ -143,13 +142,12 @@ def search_venues():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+  search = request.form.get('search_term')
+  countResponse = db.session.query(Venue).filter_by(name = search).count()
+  data =  db.session.query(Venue).filter_by(name = search).all()
   response={
-    "count": 1,
-    "data": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
+    "count": countResponse,
+    "data": data
   }
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
@@ -296,13 +294,12 @@ def search_artists():
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
+  search = request.form.get('search_term')
+  countResponse = db.session.query(Artist).filter_by(name = search).count()
+  data =  db.session.query(Artist).filter_by(name = search).all()
   response={
-    "count": 1,
-    "data": [{
-      "id": 4,
-      "name": "Guns N Petals",
-      "num_upcoming_shows": 0,
-    }]
+    "count": countResponse,
+    "data": data
   }
   return render_template('pages/search_artists.html', results=response, search_term=request.form.get('search_term', ''))
 
