@@ -33,13 +33,14 @@ class Venue(db.Model):
     __tablename__ = 'Venue'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
+    name = db.Column(db.String, nullable=False)
     city = db.Column(db.String(120), nullable= False)
     state = db.Column(db.String(120), nullable= False)
     address = db.Column(db.String(120), nullable= False)
     phone = db.Column(db.String(120), nullable= False)
-    image_link = db.Column(db.String(500), nullable= False)
-    facebook_link = db.Column(db.String(120), nullable= False)
+    genres = db.Column(db.String(120))
+    image_link = db.Column(db.String(500))
+    facebook_link = db.Column(db.String(120))
     website = db.Column(db.String(500))
     seeking_talent = db.Column(db.Boolean(), default= False)
     seeking_description = db.Column(db.String())
@@ -445,6 +446,21 @@ def edit_venue(venue_id):
 def edit_venue_submission(venue_id):
   # TODO: take values from the form submitted, and update existing
   # venue record with ID <venue_id> using the new attributes
+  
+  try:
+    _venue = db.session.query(Venue).filter_by(id = venue_id).first()
+    _venue.name = request.form.get('name')
+    _venue.city = request.form.get('city')
+    _venue.state = request.form.get('state')
+    _venue.phone = request.form.get('phone')
+    _venue.address = request.form.get('address')
+    # _venue.genres = request.form.get('genres') | ""
+    # _venue.facebook_link = request.form.get('facebook_link') | ""
+    db.session.commit()
+  except:
+    db.session.rollback()
+  finally:
+    db.session.close()
   return redirect(url_for('show_venue', venue_id=venue_id))
 
 #  Create Artist
