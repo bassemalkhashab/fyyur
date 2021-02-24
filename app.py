@@ -11,6 +11,7 @@ from flask_sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
+from sqlalchemy.orm import backref
 from forms import *
 from flask_migrate import Migrate
 #----------------------------------------------------------------------------#
@@ -28,7 +29,12 @@ migrate = Migrate(app, db)
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
-show_association_table= db.Table('show_association_table',db.Column('Show', db.Integer, db.ForeignKey('Show.id')),db.Column('Artist', db.Integer, db.ForeignKey('Artist.id')),db.Column('Venue', db.Integer, db.ForeignKey('Venue.id')))
+
+show_association_table= db.Table('show_association_table',
+  db.Column('artist_id', db.Integer, db.ForeignKey('Artist.id')),
+  db.Column('venue_id', db.Integer, db.ForeignKey('Venue.id')),
+  db.Column('show_id' , db.Integer, db.ForeignKey('Show.id'))
+)
 
 class Venue(db.Model):
     __tablename__ = 'Venue'
@@ -45,6 +51,7 @@ class Venue(db.Model):
     website = db.Column(db.String(500))
     seeking_talent = db.Column(db.Boolean(), default= False)
     seeking_description = db.Column(db.String())
+
     
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
@@ -68,12 +75,10 @@ class Show(db.Model):
     __tablename__='Show'
 
     id= db.Column(db.Integer, primary_key=True)
-    artist_id= db.Column(db.Integer, nullable=False)
-    venue_id= db.Column(db.Integer, nullable=False)
     start_time= db.Column(db.DateTime)
     past_or_upcomming= db.Column(db.String())
-    artists= db.relationship("Artist", secondary=show_association_table)
-    venues= db.relationship("Venue", secondary=show_association_table)
+    artists= db.relationship("Artist", secondary=show_association_table, backref=db.backref('show_artists',lazy=True))
+    venues= db.relationship("Venue", secondary=show_association_table, backref=db.backref('show_venues',lazy=True))
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
@@ -562,8 +567,12 @@ def create_show_submission():
     artistId = request.form.get('artist_id')
     venueId = request.form.get('venue_id')
     startTime = request.form.get('start_time')
-    show = Show(artist_id= artistId, venue_id= venueId, start_time= startTime)
+    artist = Artist.query.filter_by(id = artistId).first()
+    venue = Venue.query.filter_by(id = venueId).first()
+    show = Show(start_time= startTime)
     db.session.add(show)
+    artist.show_artists.append(show)
+    venue.show_venues.append(venue)
     db.session.commit()
   # on successful db insert, flash success
     flash('Show was successfully listed!')
