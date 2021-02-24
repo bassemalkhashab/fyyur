@@ -28,6 +28,7 @@ migrate = Migrate(app, db)
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
+show_association_table= db.Table('show_association_table',db.Column('Show', db.Integer, db.ForeignKey('Show.id')),db.Column('Artist', db.Integer, db.ForeignKey('Artist.id')),db.Column('Venue', db.Integer, db.ForeignKey('Venue.id')))
 
 class Venue(db.Model):
     __tablename__ = 'Venue'
@@ -74,11 +75,6 @@ class Show(db.Model):
     artists= db.relationship("Artist", secondary=show_association_table)
     venues= db.relationship("Venue", secondary=show_association_table)
 
-show_association_table= db.Table('show_association_table',
-db.Column('Show', db.Integer, db.ForeignKey('Show.id')),
-db.Column('Artist', db.Integer, db.foreignKey('Artist.id')),
-db.Column('Venue', db.Integer, db.ForeignKey('Venue.id'))
-)
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
