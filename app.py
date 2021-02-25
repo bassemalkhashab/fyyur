@@ -5,6 +5,7 @@
 import json
 import dateutil.parser
 import babel
+import datetime
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
@@ -22,67 +23,20 @@ from flask_migrate import Migrate
 app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
-app.config['SQLALCHEMY_DATABASE_URI']='postgresql:///todoapp'
+app.config['SQLALCHEMY_DATABASE_URI']='postgresql:///fyyur'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
-
 show_association_table= db.Table('show_association_table',
   db.Column('artist_id', db.Integer, db.ForeignKey('Artist.id')),
   db.Column('venue_id', db.Integer, db.ForeignKey('Venue.id')),
   db.Column('show_id' , db.Integer, db.ForeignKey('Show.id'))
 )
 
-class Venue(db.Model):
-    __tablename__ = 'Venue'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    address = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
-    website = db.Column(db.String(500))
-    seeking_talent = db.Column(db.Boolean(), default= False)
-    seeking_description = db.Column(db.String())
-
-    
-
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
-
-class Artist(db.Model):
-    __tablename__ = 'Artist'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    genres = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
-    website = db.Column(db.String(500))
-    seeking_talent = db.Column(db.Boolean(), default= False)
-    seeking_description = db.Column(db.String())
-
-class Show(db.Model):
-    __tablename__='Show'
-
-    id= db.Column(db.Integer, primary_key=True)
-    start_time= db.Column(db.DateTime)
-    past_or_upcomming= db.Column(db.String())
-    artists= db.relationship("Artist", secondary=show_association_table, backref=db.backref('show_artists',lazy=True))
-    venues= db.relationship("Venue", secondary=show_association_table, backref=db.backref('show_venues',lazy=True))
-
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
-
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+from models import Artist, Venue, Show
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -118,7 +72,11 @@ def venues():
   state_data= db.session.query(Venue.state, Venue.city).group_by(Venue.state, Venue.city).all()
 
   for i in range(len(state_data)):
-    data.append({'city':state_data[i][1],'state':state_data[i][0],'venues':db.session.query(Venue.name, Venue.id).filter_by(state= state_data[i][0], city=state_data[i][1]).all()})
+    data.append({
+      'city':state_data[i][1],
+      'state':state_data[i][0],
+      'venues':db.session.query(Venue.name, Venue.id).filter_by(state= state_data[i][0], city=state_data[i][1]).all()
+    })
     
   
   # data=[{
@@ -163,7 +121,13 @@ def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
   data = db.session.query(Venue).filter_by(id = venue_id).first()
-
+  upcommingShows = db.session.query(Artist.name.label('artist_name'), Show.artist_id.label('artist_id'),Artist.image_link.label('artist_image_link') , Show.start_time).join(Show, Artist.id == Show.artist_id).filter(Show.venue_id == venue_id).filter(Show.past_or_upcomming == 'upcomming').all()
+  pastShows = db.session.query(Artist.name.label('artist_name'), Show.artist_id.label('artist_id'),Artist.image_link.label('artist_image_link') , Show.start_time).join(Show, Artist.id == Show.artist_id).filter(Show.venue_id == venue_id).filter(Show.past_or_upcomming == 'past').all()
+  data.past_shows = pastShows
+  data.upcoming_shows = upcommingShows
+  data.upcoming_shows_count = len(upcommingShows)
+  data.past_shows_count = len(pastShows)
+  
   # data1={
   #   "id": 1,
   #   "name": "The Musical Hop",
@@ -314,7 +278,15 @@ def search_artists():
 def show_artist(artist_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
+  
   data = db.session.query(Artist).filter_by(id = artist_id).first()
+  upcommingShows = db.session.query(Venue.name.label('venue_name'), Show.venue_id.label('venue_id'),Venue.image_link.label('venue_image_link'), Show.start_time).join(Show, Venue.id == Show.venue_id).filter(Show.artist_id == artist_id).filter(Show.past_or_upcomming == 'upcomming').all()
+  pastShows = db.session.query(Venue.name.label('venue_name'), Show.venue_id.label('venue_id'),Venue.image_link.label('venue_image_link'), Show.start_time).join(Show, Venue.id == Show.venue_id).filter(Show.artist_id == artist_id).filter(Show.past_or_upcomming == 'past').all()
+  data.past_shows = pastShows
+  data.upcoming_shows = upcommingShows
+  data.upcoming_shows_count = len(upcommingShows)
+  data.past_shows_count = len(pastShows)
+
   # data1={
   #   "id": 4,
   #   "name": "Guns N Petals",
@@ -583,7 +555,9 @@ def create_show_submission():
     startTime = request.form.get('start_time')
     artist = Artist.query.filter_by(id = artistId).first()
     venue = Venue.query.filter_by(id = venueId).first()
-    show = Show(start_time= startTime)
+    date_now = str(datetime.now())
+    pastOrUpcomming = "past" if startTime < date_now else "upcomming"
+    show = Show(start_time= startTime , past_or_upcomming =pastOrUpcomming , artist_id = artistId , venue_id = venueId)
     db.session.add(show)
     artist.show_artists.append(show)
     venue.show_venues.append(show)
