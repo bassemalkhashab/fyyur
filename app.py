@@ -3,6 +3,8 @@
 #----------------------------------------------------------------------------#
 
 import json
+from operator import ge
+import re
 import dateutil.parser
 import babel
 import datetime
@@ -30,13 +32,9 @@ migrate = Migrate(app, db)
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
-show_association_table= db.Table('show_association_table',
-  db.Column('artist_id', db.Integer, db.ForeignKey('Artist.id')),
-  db.Column('venue_id', db.Integer, db.ForeignKey('Venue.id')),
-  db.Column('show_id' , db.Integer, db.ForeignKey('Show.id'))
-)
 
-from models import Artist, Venue, Show
+
+from models import *
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -226,8 +224,14 @@ def create_venue_submission():
     state= request.form.get('state')
     address= request.form.get('address')
     phone= request.form.get('phone')
+    genres = request.form.get('genres')
     facebook_link= request.form.get('facebook_link')
-    venue= Venue(name= name, city= city, state= state, address= address, phone= phone, facebook_link= facebook_link)
+    image_link= request.form.get('image_link')
+    _seekingTalent= request.form.get('seeking_talent')
+    seekingTalent= True if _seekingTalent == "on" else False
+    seekingTalentDescription = request.form.get('seeking_description')
+    website = request.form.get('website')
+    venue= Venue(name= name, city= city, state= state, address= address, phone= phone, genres= genres, facebook_link= facebook_link, image_link= image_link, seeking_talent= seekingTalent, seeking_description= seekingTalentDescription, website= website)
     db.session.add(venue)
     db.session.commit()
   # on successful db insert, flash success
@@ -395,6 +399,10 @@ def edit_artist_submission(artist_id):
     _artist.phone = request.form.get('phone')
     _artist.genres = request.form.get('genres')
     _artist.facebook_link = request.form.get('facebook_link')
+    _artist.website = request.form.get('website') 
+    _artist.seeking_venue = request.form.get('seeking_venue') 
+    _artist.seeking_description = request.form.get('seeking_description') 
+    _artist.image_link = request.form.get('image_link') 
     db.session.commit()
   except:
     db.session.rollback()
@@ -435,8 +443,12 @@ def edit_venue_submission(venue_id):
     _venue.state = request.form.get('state')
     _venue.phone = request.form.get('phone')
     _venue.address = request.form.get('address')
-    # _venue.genres = request.form.get('genres') | ""
-    # _venue.facebook_link = request.form.get('facebook_link') | ""
+    _venue.genres = request.form.get('genres') 
+    _venue.facebook_link = request.form.get('facebook_link') 
+    _venue.website = request.form.get('website') 
+    _venue.seeking_talent = request.form.get('seeking_talent') 
+    _venue.seeking_description = request.form.get('seeking_description') 
+    _venue.image_link = request.form.get('image_link') 
     db.session.commit()
   except:
     db.session.rollback()
@@ -464,7 +476,12 @@ def create_artist_submission():
     phone = request.form.get('phone')
     genres = request.form.get('genres')
     facebook_link = request.form.get('facebook_link')
-    artist= Artist(name= name, city= city, state= state, phone= phone, genres= genres, facebook_link= facebook_link)
+    image_link= request.form.get('image_link')
+    _seekingVenue= request.form.get('seeking_venue')
+    seekingVenue= True if _seekingVenue == "on" else False
+    seekingVenueDescription = request.form.get('seeking_description')
+    website = request.form.get('website')
+    artist= Artist(name= name, city= city, state= state, phone= phone, genres= genres, facebook_link= facebook_link, image_link=image_link, website= website, seeking_venue=seekingVenue, seeking_description= seekingVenueDescription)
     db.session.add(artist)
     db.session.commit()
   # on successful db insert, flash success
