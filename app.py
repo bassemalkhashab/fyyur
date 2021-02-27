@@ -106,8 +106,8 @@ def search_venues():
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
   search = request.form.get('search_term')
-  countResponse = db.session.query(Venue).filter(Venue.name.contains(search)).count()
-  data =  db.session.query(Venue).filter(Venue.name.contains(search)).all()
+  countResponse = db.session.query(Venue).filter(Venue.name.ilike(f'%{search}%')).count()
+  data =  db.session.query(Venue).filter(Venue.name.ilike(f'%{search}%')).all()
   response={
     "count": countResponse,
     "data": data
@@ -228,7 +228,7 @@ def create_venue_submission():
     facebook_link= request.form.get('facebook_link')
     image_link= request.form.get('image_link')
     _seekingTalent= request.form.get('seeking_talent')
-    seekingTalent= True if _seekingTalent == "on" else False
+    seekingTalent= True if _seekingTalent == "y" else False
     seekingTalentDescription = request.form.get('seeking_description')
     website = request.form.get('website')
     venue= Venue(name= name, city= city, state= state, address= address, phone= phone, genres= genres, facebook_link= facebook_link, image_link= image_link, seeking_talent= seekingTalent, seeking_description= seekingTalentDescription, website= website)
@@ -270,8 +270,8 @@ def search_artists():
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
   search = request.form.get('search_term')
-  countResponse = db.session.query(Artist).filter(Artist.name.contains(search)).count()
-  data =  db.session.query(Artist).filter(Artist.name.contains(search)).all()
+  countResponse = db.session.query(Artist).filter(Artist.name.ilike(f'%{search}%')).count()
+  data =  db.session.query(Artist).filter(Artist.name.ilike(f'%{search}%')).all()
   response={
     "count": countResponse,
     "data": data
@@ -400,7 +400,8 @@ def edit_artist_submission(artist_id):
     _artist.genres = request.form.get('genres')
     _artist.facebook_link = request.form.get('facebook_link')
     _artist.website = request.form.get('website') 
-    _artist.seeking_venue = request.form.get('seeking_venue') 
+    _seekingVenue = request.form.get('seeking_venue') 
+    _artist.seeking_venue = True if _seekingVenue == "y" else False
     _artist.seeking_description = request.form.get('seeking_description') 
     _artist.image_link = request.form.get('image_link') 
     db.session.commit()
@@ -446,7 +447,8 @@ def edit_venue_submission(venue_id):
     _venue.genres = request.form.get('genres') 
     _venue.facebook_link = request.form.get('facebook_link') 
     _venue.website = request.form.get('website') 
-    _venue.seeking_talent = request.form.get('seeking_talent') 
+    _seekingArtist = request.form.get('seeking_talent') 
+    _venue.seeking_talent = True if _seekingArtist == "y" else False
     _venue.seeking_description = request.form.get('seeking_description') 
     _venue.image_link = request.form.get('image_link') 
     db.session.commit()
@@ -478,7 +480,7 @@ def create_artist_submission():
     facebook_link = request.form.get('facebook_link')
     image_link= request.form.get('image_link')
     _seekingVenue= request.form.get('seeking_venue')
-    seekingVenue= True if _seekingVenue == "on" else False
+    seekingVenue= True if _seekingVenue == "y" else False
     seekingVenueDescription = request.form.get('seeking_description')
     website = request.form.get('website')
     artist= Artist(name= name, city= city, state= state, phone= phone, genres= genres, facebook_link= facebook_link, image_link=image_link, website= website, seeking_venue=seekingVenue, seeking_description= seekingVenueDescription)
@@ -493,7 +495,7 @@ def create_artist_submission():
     flash('An error occurred. Artist ' + name + ' could not be listed.')
   finally:
     db.session.close()
-  return redirect(url_for('index'))
+    return redirect(url_for('index'))
 
 #  Shows
 #  ----------------------------------------------------------------
