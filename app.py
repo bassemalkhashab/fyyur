@@ -106,8 +106,8 @@ def search_venues():
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
   search = request.form.get('search_term')
-  countResponse = db.session.query(Venue).filter_by(name = search).count()
-  data =  db.session.query(Venue).filter_by(name = search).all()
+  countResponse = db.session.query(Venue).filter(Venue.name.contains(search)).count()
+  data =  db.session.query(Venue).filter(Venue.name.contains(search)).all()
   response={
     "count": countResponse,
     "data": data
@@ -270,8 +270,8 @@ def search_artists():
   # seach for "A" should return "Guns N Petals", "Matt Quevado", and "The Wild Sax Band".
   # search for "band" should return "The Wild Sax Band".
   search = request.form.get('search_term')
-  countResponse = db.session.query(Artist).filter_by(name = search).count()
-  data =  db.session.query(Artist).filter_by(name = search).all()
+  countResponse = db.session.query(Artist).filter(Artist.name.contains(search)).count()
+  data =  db.session.query(Artist).filter(Artist.name.contains(search)).all()
   response={
     "count": countResponse,
     "data": data
@@ -565,7 +565,7 @@ def create_shows():
 def create_show_submission():
   # called to create new shows in the db, upon submitting new show listing form
   # TODO: insert form data as a new Show record in the db, instead
-  # try:
+  try:
 
     artistId = request.form.get('artist_id')
     venueId = request.form.get('venue_id')
@@ -582,15 +582,15 @@ def create_show_submission():
   # on successful db insert, flash success
     flash('Show was successfully listed!')
 
-  # except:
+  except:
 
-  #   db.session.rollback()
-  # # TODO: on unsuccessful db insert, flash an error instead.
-  # # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-  # # e.g., flash('An error occurred. Show could not be listed.')
-  #   flash('An error occurred. Show could not be listed.')
+    db.session.rollback()
+  # TODO: on unsuccessful db insert, flash an error instead.
+  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+  # e.g., flash('An error occurred. Show could not be listed.')
+    flash('An error occurred. Show could not be listed.')
 
-  # finally:
+  finally:
     db.session.close()
     return render_template('pages/home.html')
 
