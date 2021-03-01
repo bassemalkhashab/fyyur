@@ -23,8 +23,6 @@ from flask_migrate import Migrate
 app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
-app.config['SQLALCHEMY_DATABASE_URI']='postgresql:///fyyur'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 #----------------------------------------------------------------------------#
