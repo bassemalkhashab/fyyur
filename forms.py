@@ -1,9 +1,12 @@
 from datetime import datetime
 from flask_wtf import Form
+from flask_wtf import csrf
 from wtforms import StringField, SelectField, SelectMultipleField, DateTimeField
 from wtforms.fields.core import BooleanField
-from wtforms.validators import DataRequired, AnyOf, URL
+from wtforms.validators import DataRequired, AnyOf, Regexp, URL
 from wtforms.widgets.core import CheckboxInput
+
+
 
 class ShowForm(Form):
     artist_id = StringField(
@@ -86,9 +89,25 @@ class VenueForm(Form):
     )
     phone = StringField(
         'phone'
+        , validators=[DataRequired(),
+                                Regexp(
+                                    r'\d{3}.\d{3}.\d{4}'
+                                    ,
+                                    message= "The phone number must be xxx-xxx-xxxx"
+                                )
+
+                            ]
     )
     image_link = StringField(
         'image_link'
+        , validators=[DataRequired(),
+                                Regexp(
+                                    r'\w+://[\w\-\.]+/\w*.\w*.\w*.\w*.\w*.\w*.\w*.\w*.\w*.\w*.\w*.\w*.\w*'
+                                    ,
+                                    message= "enter a correct url"
+                                )
+
+                            ]
     )
     genres = SelectMultipleField(
         # TODO implement enum restriction
@@ -116,10 +135,26 @@ class VenueForm(Form):
         ]
     )
     facebook_link = StringField(
-        'facebook_link', validators=[URL()]
+        'facebook_link'
+        , validators=[DataRequired(),
+                                Regexp(
+                                    r'^https?://'
+                                    ,
+                                    message= "enter a correct url"
+                                )
+
+                            ]
     )
     website = StringField(
         'website'
+        , validators=[DataRequired(),
+                                Regexp(
+                                    r'^https?://'
+                                    ,
+                                    message= "enter a correct url"
+                                )
+
+                            ]
     )
     seeking_talent = BooleanField(
         'seeking_venue'
@@ -193,10 +228,26 @@ class ArtistForm(Form):
     )
     phone = StringField(
         # TODO implement validation logic for state
-        'phone' , validators=[DataRequired()]
+        'phone' 
+        , validators=[DataRequired(),
+                                Regexp(
+                                     r'\d{3}.\d{3}.\d{4}'
+                                    ,
+                                    message= "The phone number must be xxx-xxx-xxxx"
+                                )
+
+                            ]
     )
     image_link = StringField(
         'image_link'
+        , validators=[DataRequired(),
+                                Regexp(
+                                    r'\w+://[\w\-\.]+/\w*.\w*.\w*.\w*.\w*.\w*.\w*.\w*.\w*.\w*.\w*.\w*.\w*'
+                                    ,
+                                    message= "enter a correct url"
+                                )
+
+                            ]
     )
     genres = SelectMultipleField(
         # TODO implement enum restriction
@@ -225,10 +276,26 @@ class ArtistForm(Form):
     )
     facebook_link = StringField(
         # TODO implement enum restriction
-        'facebook_link', validators=[URL()]
+        'facebook_link'
+        , validators=[DataRequired(),
+                                Regexp(
+                                     r'^https?://'
+                                    ,
+                                    message= "enter a correct url"
+                                )
+
+                            ]
     )
     website = StringField(
         'website'
+        , validators=[DataRequired(),
+                                Regexp(
+                                   r'^https?://'
+                                    ,
+                                    message= "enter a correct url"
+                                )
+
+                            ]
     )
     seeking_venue = BooleanField(
         'seeking_venue'

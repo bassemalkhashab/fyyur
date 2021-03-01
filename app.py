@@ -13,7 +13,8 @@ from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
-from flask_wtf import Form
+from flask_wtf import Form, form
+from flask_wtf import CSRFProtect
 from sqlalchemy.orm import backref
 from forms import *
 from flask_migrate import Migrate
@@ -27,8 +28,11 @@ moment = Moment(app)
 app.config.from_object('config')
 app.config['SQLALCHEMY_DATABASE_URI']='postgresql:///fyyur'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS']=False
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+csrf = CSRFProtect()
+csrf.init_app(app)
 #----------------------------------------------------------------------------#
 # Models.
 #----------------------------------------------------------------------------#
@@ -218,32 +222,41 @@ def create_venue_form():
 def create_venue_submission():
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
-  try:
-    name= request.form.get('name')
-    city= request.form.get('city')
-    state= request.form.get('state')
-    address= request.form.get('address')
-    phone= request.form.get('phone')
-    genres = request.form.get('genres')
-    facebook_link= request.form.get('facebook_link')
-    image_link= request.form.get('image_link')
-    _seekingTalent= request.form.get('seeking_talent')
-    seekingTalent= True if _seekingTalent == "y" else False
-    seekingTalentDescription = request.form.get('seeking_description')
-    website = request.form.get('website')
-    venue= Venue(name= name, city= city, state= state, address= address, phone= phone, genres= genres, facebook_link= facebook_link, image_link= image_link, seeking_talent= seekingTalent, seeking_description= seekingTalentDescription, website= website)
-    db.session.add(venue)
-    db.session.commit()
-  # on successful db insert, flash success
-    flash('Venue ' + request.form['name'] + ' was successfully listed!')
-  except:
-    db.session.rollback()
-  # TODO: on unsuccessful db insert, flash an error instead.
-  # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
-  # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
-    flash('An error occurred. Venue ' + name + ' could not be listed.')
-  finally:
-    db.session.close()
+  form = VenueForm()
+  if form.validate_on_submit():
+    try:
+      name= request.form.get('name')
+      city= request.form.get('city')
+      state= request.form.get('state')
+      address= request.form.get('address')
+      phone= request.form.get('phone')
+      genres = request.form.get('genres')
+      facebook_link= request.form.get('facebook_link')
+      image_link= request.form.get('image_link')
+      _seekingTalent= request.form.get('seeking_talent')
+      seekingTalent= True if _seekingTalent == "y" else False
+      seekingTalentDescription = request.form.get('seeking_description')
+      website = request.form.get('website')
+      venue= Venue(name= name, city= city, state= state, address= address, phone= phone, genres= genres, facebook_link= facebook_link, image_link= image_link, seeking_talent= seekingTalent, seeking_description= seekingTalentDescription, website= website)
+      db.session.add(venue)
+      db.session.commit()
+    # on successful db insert, flash success
+      flash('Venue ' + request.form['name'] + ' was successfully listed!')
+    except:
+      db.session.rollback()
+    # TODO: on unsuccessful db insert, flash an error instead.
+    # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
+    # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+      flash('An error occurred. Venue ' + name + ' could not be listed.')
+    finally:
+      db.session.close()
+
+  else:
+    for error in form.errors:
+      flash(error)
+      print(error)
+      print(form)
+    
   return render_template('pages/home.html')
   
 
@@ -391,24 +404,32 @@ def edit_artist(artist_id):
 def edit_artist_submission(artist_id):
   # TODO: take values from the form submitted, and update existing
   # artist record with ID <artist_id> using the new attributes
-  try:
-    _artist = db.session.query(Artist).filter_by(id = artist_id).first()
-    _artist.name = request.form.get('name')
-    _artist.city = request.form.get('city')
-    _artist.state = request.form.get('state')
-    _artist.phone = request.form.get('phone')
-    _artist.genres = request.form.get('genres')
-    _artist.facebook_link = request.form.get('facebook_link')
-    _artist.website = request.form.get('website') 
-    _seekingVenue = request.form.get('seeking_venue') 
-    _artist.seeking_venue = True if _seekingVenue == "y" else False
-    _artist.seeking_description = request.form.get('seeking_description') 
-    _artist.image_link = request.form.get('image_link') 
-    db.session.commit()
-  except:
-    db.session.rollback()
-  finally:
-    db.session.close()
+  form = ArtistForm()
+  if form.validate_on_submit():
+    try:
+      _artist = db.session.query(Artist).filter_by(id = artist_id).first()
+      _artist.name = request.form.get('name')
+      _artist.city = request.form.get('city')
+      _artist.state = request.form.get('state')
+      _artist.phone = request.form.get('phone')
+      _artist.genres = request.form.get('genres')
+      _artist.facebook_link = request.form.get('facebook_link')
+      _artist.website = request.form.get('website') 
+      _seekingVenue = request.form.get('seeking_venue') 
+      _artist.seeking_venue = True if _seekingVenue == "y" else False
+      _artist.seeking_description = request.form.get('seeking_description') 
+      _artist.image_link = request.form.get('image_link') 
+      db.session.commit()
+    except:
+      db.session.rollback()
+    finally:
+      db.session.close()
+
+  else:
+    for error in form.errors:
+      flash(error)
+      print(error)
+      print(form)
   return redirect(url_for('show_artist', artist_id=artist_id))
 
 @app.route('/venues/<int:venue_id>/edit', methods=['GET'])
@@ -436,26 +457,32 @@ def edit_venue(venue_id):
 def edit_venue_submission(venue_id):
   # TODO: take values from the form submitted, and update existing
   # venue record with ID <venue_id> using the new attributes
-  
-  try:
-    _venue = db.session.query(Venue).filter_by(id = venue_id).first()
-    _venue.name = request.form.get('name')
-    _venue.city = request.form.get('city')
-    _venue.state = request.form.get('state')
-    _venue.phone = request.form.get('phone')
-    _venue.address = request.form.get('address')
-    _venue.genres = request.form.get('genres') 
-    _venue.facebook_link = request.form.get('facebook_link') 
-    _venue.website = request.form.get('website') 
-    _seekingArtist = request.form.get('seeking_talent') 
-    _venue.seeking_talent = True if _seekingArtist == "y" else False
-    _venue.seeking_description = request.form.get('seeking_description') 
-    _venue.image_link = request.form.get('image_link') 
-    db.session.commit()
-  except:
-    db.session.rollback()
-  finally:
-    db.session.close()
+  form = VenueForm()
+  if form.validate_on_submit():
+    try:
+      _venue = db.session.query(Venue).filter_by(id = venue_id).first()
+      _venue.name = request.form.get('name')
+      _venue.city = request.form.get('city')
+      _venue.state = request.form.get('state')
+      _venue.phone = request.form.get('phone')
+      _venue.address = request.form.get('address')
+      _venue.genres = request.form.get('genres') 
+      _venue.facebook_link = request.form.get('facebook_link') 
+      _venue.website = request.form.get('website') 
+      _seekingArtist = request.form.get('seeking_talent') 
+      _venue.seeking_talent = True if _seekingArtist == "y" else False
+      _venue.seeking_description = request.form.get('seeking_description') 
+      _venue.image_link = request.form.get('image_link') 
+      db.session.commit()
+    except:
+      db.session.rollback()
+    finally:
+      db.session.close()
+  else:
+    for error in form.errors:
+      flash(error)
+      print(error)
+      print(form)
   return redirect(url_for('show_venue', venue_id=venue_id))
 
 #  Create Artist
@@ -471,32 +498,39 @@ def create_artist_submission():
   # called upon submitting the new artist listing form
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
-  try:
-    name = request.form.get('name')
-    city = request.form.get('city')
-    state = request.form.get('state')
-    phone = request.form.get('phone')
-    genres = request.form.get('genres')
-    facebook_link = request.form.get('facebook_link')
-    image_link= request.form.get('image_link')
-    _seekingVenue= request.form.get('seeking_venue')
-    seekingVenue= True if _seekingVenue == "y" else False
-    seekingVenueDescription = request.form.get('seeking_description')
-    website = request.form.get('website')
-    artist= Artist(name= name, city= city, state= state, phone= phone, genres= genres, facebook_link= facebook_link, image_link=image_link, website= website, seeking_venue=seekingVenue, seeking_description= seekingVenueDescription)
-    db.session.add(artist)
-    db.session.commit()
-  # on successful db insert, flash success
-    flash('Artist ' + request.form['name'] + ' was successfully listed!')
-  except:
-    db.session.rollback()
-    # TODO: on unsuccessful db insert, flash an error instead.
-    # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
-    flash('An error occurred. Artist ' + name + ' could not be listed.')
-  finally:
-    db.session.close()
-    return redirect(url_for('index'))
+  form = ArtistForm()
+  if form.validate_on_submit():
+    try:
+      name = request.form.get('name')
+      city = request.form.get('city')
+      state = request.form.get('state')
+      phone = request.form.get('phone')
+      genres = request.form.get('genres')
+      facebook_link = request.form.get('facebook_link')
+      image_link= request.form.get('image_link')
+      _seekingVenue= request.form.get('seeking_venue')
+      seekingVenue= True if _seekingVenue == "y" else False
+      seekingVenueDescription = request.form.get('seeking_description')
+      website = request.form.get('website')
+      artist= Artist(name= name, city= city, state= state, phone= phone, genres= genres, facebook_link= facebook_link, image_link=image_link, website= website, seeking_venue=seekingVenue, seeking_description= seekingVenueDescription)
+      db.session.add(artist)
+      db.session.commit()
+    # on successful db insert, flash success
+      flash('Artist ' + request.form['name'] + ' was successfully listed!')
+    except:
+      db.session.rollback()
+      # TODO: on unsuccessful db insert, flash an error instead.
+      # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
+      flash('An error occurred. Artist ' + name + ' could not be listed.')
+    finally:
+      db.session.close()
+      return redirect(url_for('index'))
 
+  else:
+    for error in form.errors:
+      flash(error)
+      print(error)
+      print(form)
 #  Shows
 #  ----------------------------------------------------------------
 
